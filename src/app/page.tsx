@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { AlertCircle, Calendar, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 interface TimeEntry {
   id: number;
@@ -158,7 +159,12 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6 text-center">OJT Hours Tracker</h1>
+      <div className="flex justify-between">
+        <h1 className="text-3xl font-bold mb-6 text-center">
+          OJT Hours Tracker
+        </h1>
+        <ThemeSwitcher />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card className="shadow-md">
@@ -176,11 +182,11 @@ export default function Home() {
                   )`,
                 }}
               >
-                <div className="absolute top-4 left-4 right-4 bottom-4 bg-white rounded-full flex items-center justify-center flex-col">
+                <div className="absolute top-4 left-4 right-4 bottom-4 bg-primary rounded-full flex items-center justify-center flex-col">
                   <span className="text-4xl font-bold">
                     {completionPercentage}%
                   </span>
-                  <span className="text-gray-500 text-sm">Complete</span>
+                  <span className="text-sm">Complete</span>
                 </div>
               </div>
             </div>
@@ -313,7 +319,7 @@ export default function Home() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={handleAddEntry}>
+            <Button className="w-full text-foreground" onClick={handleAddEntry}>
               Add Time Entry
             </Button>
           </CardFooter>
