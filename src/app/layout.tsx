@@ -28,6 +28,19 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <footer className="p-3 text-center">
+          <p>
+            Built with NextJS + TailwindCSS by{" "}
+            <span>
+              <a
+                className="underline hover:text-red-600"
+                href="https://www.facebook.com/xxxjustentacion/"
+              >
+                Justine Ivan Gueco
+              </a>
+            </span>
+          </p>
+        </footer>
       </body>
     </html>
   );
