@@ -16,16 +16,17 @@ import { AlertCircle, Calendar, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { createClient } from "@/utils/supabase/client";
 
 interface TimeEntry {
   id: number;
   date: string;
-  morningTimeIn: string;
-  morningTimeOut: string;
-  afternoonTimeIn: string;
-  afternoonTimeOut: string;
-  eveningTimeIn: string;
-  eveningTimeOut: string;
+  morning_time_in: string;
+  morning_time_out: string;
+  afternoon_time_in: string;
+  afternoon_time_out: string;
+  evening_time_in: string;
+  evening_time_out: string;
 }
 
 type NewTimeEntry = Omit<TimeEntry, "id">;
@@ -34,15 +35,18 @@ export default function Home() {
   const [requiredHours, setRequiredHours] = useState<number>(500);
   const [completedHours, setCompletedHours] = useState<number>(0);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const supabase = createClient();
 
   const [newEntry, setNewEntry] = useState<NewTimeEntry>({
     date: "",
-    morningTimeIn: "",
-    morningTimeOut: "",
-    afternoonTimeIn: "",
-    afternoonTimeOut: "",
-    eveningTimeIn: "",
-    eveningTimeOut: "",
+    morning_time_in: "",
+    morning_time_out: "",
+    afternoon_time_in: "",
+    afternoon_time_out: "",
+    evening_time_in: "",
+    evening_time_out: "",
   });
 
   const completionPercentage: number = Math.min(
@@ -55,21 +59,21 @@ export default function Home() {
       localStorage.setItem("hours", requiredHours.toString());
     }
 
-    if (!localStorage.getItem("entries")) {
-      localStorage.setItem("entries", JSON.stringify(timeEntries));
+    async function fetchEntries() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const entries = await fetch(`/api/entries?created_by=${user?.id}`);
+
+      const data = await entries.json();
+
+      setLoading(false);
+      setTimeEntries(data);
     }
+
+    fetchEntries();
 
     setRequiredHours(Number(localStorage.getItem("hours")));
-
-    const entriesStorage = localStorage.getItem("entries");
-
-    if (!entriesStorage) {
-      return;
-    }
-
-    const parsedEntries: TimeEntry[] = JSON.parse(entriesStorage);
-
-    setTimeEntries(parsedEntries);
   }, []);
 
   useEffect(() => {
@@ -89,16 +93,16 @@ export default function Home() {
       };
 
       const morningHours = calculateHours(
-        entry.morningTimeIn,
-        entry.morningTimeOut
+        entry.morning_time_in,
+        entry.morning_time_out
       );
       const afternoonHours = calculateHours(
-        entry.afternoonTimeIn,
-        entry.afternoonTimeOut
+        entry.afternoon_time_in,
+        entry.afternoon_time_out
       );
       const eveningHours = calculateHours(
-        entry.eveningTimeIn,
-        entry.eveningTimeOut
+        entry.evening_time_in,
+        entry.evening_time_out
       );
 
       totalHours += morningHours + afternoonHours + eveningHours;
@@ -122,26 +126,51 @@ export default function Home() {
     setRequiredHours(value);
   };
 
-  const handleAddEntry = (): void => {
+  const handleAddEntry = async () => {
     if (!newEntry.date) {
       alert("Please select a date");
       return;
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     setTimeEntries((prev) => [...prev, { ...newEntry, id: Date.now() }]);
+
+    const response = await fetch("/api/entries", {
+      method: "POST",
+      body: JSON.stringify({ created_by: user?.id, ...newEntry }),
+    });
+
+    if (response.status != 201) {
+      // TODO: Add some sort of error sanitization here
+      return;
+    }
 
     setNewEntry({
       date: "",
-      morningTimeIn: "",
-      morningTimeOut: "",
-      afternoonTimeIn: "",
-      afternoonTimeOut: "",
-      eveningTimeIn: "",
-      eveningTimeOut: "",
+      morning_time_in: "",
+      morning_time_out: "",
+      afternoon_time_in: "",
+      afternoon_time_out: "",
+      evening_time_in: "",
+      evening_time_out: "",
     });
   };
 
-  const handleDeleteEntry = (id: number): void => {
+  const handleDeleteEntry = async (id: number) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const response = await fetch(`/api/entries/${id}?created_by=${user?.id}`, {
+      method: "DELETE",
+    });
+
+    if (response.status != 204) {
+      // TODO: Add some sort of error sanitization here
+      return;
+    }
     setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
   };
 
@@ -177,7 +206,7 @@ export default function Home() {
                 className="w-full h-full rounded-full"
                 style={{
                   background: `conic-gradient(
-                    #3b82f6 ${completionPercentage}%, 
+                    #3b82f6 ${completionPercentage}%,
                     #e5e7eb ${completionPercentage}%
                   )`,
                 }}
@@ -241,9 +270,9 @@ export default function Home() {
                   <div className="w-1/2">
                     <Input
                       type="time"
-                      name="morningTimeIn"
+                      name="morning_time_in"
                       placeholder="Time In"
-                      value={newEntry.morningTimeIn}
+                      value={newEntry.morning_time_in}
                       onChange={handleInputChange}
                     />
                     <span className="text-xs text-gray-500">Time In</span>
@@ -251,9 +280,9 @@ export default function Home() {
                   <div className="w-1/2">
                     <Input
                       type="time"
-                      name="morningTimeOut"
+                      name="morning_time_out"
                       placeholder="Time Out"
-                      value={newEntry.morningTimeOut}
+                      value={newEntry.morning_time_out}
                       onChange={handleInputChange}
                     />
                     <span className="text-xs text-gray-500">Time Out</span>
@@ -269,9 +298,9 @@ export default function Home() {
                   <div className="w-1/2">
                     <Input
                       type="time"
-                      name="afternoonTimeIn"
+                      name="afternoon_time_in"
                       placeholder="Time In"
-                      value={newEntry.afternoonTimeIn}
+                      value={newEntry.afternoon_time_in}
                       onChange={handleInputChange}
                     />
                     <span className="text-xs text-gray-500">Time In</span>
@@ -279,9 +308,9 @@ export default function Home() {
                   <div className="w-1/2">
                     <Input
                       type="time"
-                      name="afternoonTimeOut"
+                      name="afternoon_time_out"
                       placeholder="Time Out"
-                      value={newEntry.afternoonTimeOut}
+                      value={newEntry.afternoon_time_out}
                       onChange={handleInputChange}
                     />
                     <span className="text-xs text-gray-500">Time Out</span>
@@ -297,9 +326,9 @@ export default function Home() {
                   <div className="w-1/2">
                     <Input
                       type="time"
-                      name="eveningTimeIn"
+                      name="evening_time_in"
                       placeholder="Time In"
-                      value={newEntry.eveningTimeIn}
+                      value={newEntry.evening_time_in}
                       onChange={handleInputChange}
                     />
                     <span className="text-xs text-gray-500">Time In</span>
@@ -307,9 +336,9 @@ export default function Home() {
                   <div className="w-1/2">
                     <Input
                       type="time"
-                      name="eveningTimeOut"
+                      name="evening_time_out"
                       placeholder="Time Out"
-                      value={newEntry.eveningTimeOut}
+                      value={newEntry.evening_time_out}
                       onChange={handleInputChange}
                     />
                     <span className="text-xs text-gray-500">Time Out</span>
@@ -331,7 +360,10 @@ export default function Home() {
           <CardTitle>Time Entry History</CardTitle>
         </CardHeader>
         <CardContent>
-          {timeEntries.length === 0 ? (
+          {loading && (
+            <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+          )}
+          {timeEntries.length === 0 && !loading ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
@@ -342,16 +374,16 @@ export default function Home() {
             <div className="space-y-4">
               {timeEntries.map((entry, index) => {
                 const morningHours = calculateEntryHours(
-                  entry.morningTimeIn,
-                  entry.morningTimeOut
+                  entry.morning_time_in,
+                  entry.morning_time_out
                 );
                 const afternoonHours = calculateEntryHours(
-                  entry.afternoonTimeIn,
-                  entry.afternoonTimeOut
+                  entry.afternoon_time_in,
+                  entry.afternoon_time_out
                 );
                 const eveningHours = calculateEntryHours(
-                  entry.eveningTimeIn,
-                  entry.eveningTimeOut
+                  entry.evening_time_in,
+                  entry.evening_time_out
                 );
                 const totalHours = morningHours + afternoonHours + eveningHours;
 
@@ -372,30 +404,30 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      {entry.morningTimeIn && (
+                      {entry.morning_time_in && (
                         <div>
                           <span className="font-medium">Morning:</span>{" "}
-                          {entry.morningTimeIn} - {entry.morningTimeOut}
+                          {entry.morning_time_in} - {entry.morning_time_out}
                           <span className="ml-2 text-gray-500">
                             ({morningHours.toFixed(2)} hrs)
                           </span>
                         </div>
                       )}
 
-                      {entry.afternoonTimeIn && (
+                      {entry.afternoon_time_in && (
                         <div>
                           <span className="font-medium">Afternoon:</span>{" "}
-                          {entry.afternoonTimeIn} - {entry.afternoonTimeOut}
+                          {entry.afternoon_time_in} - {entry.afternoon_time_out}
                           <span className="ml-2 text-gray-500">
                             ({afternoonHours.toFixed(2)} hrs)
                           </span>
                         </div>
                       )}
 
-                      {entry.eveningTimeIn && (
+                      {entry.evening_time_in && (
                         <div>
                           <span className="font-medium">Evening:</span>{" "}
-                          {entry.eveningTimeIn} - {entry.eveningTimeOut}
+                          {entry.evening_time_in} - {entry.evening_time_out}
                           <span className="ml-2 text-gray-500">
                             ({eveningHours.toFixed(2)} hrs)
                           </span>
@@ -423,6 +455,19 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
+      <footer className="p-3 mt-10 text-center">
+        <p className="text-sm">
+          Built with NextJS + TailwindCSS by{" "}
+          <span>
+            <a
+              className="underline hover:text-red-600"
+              href="https://www.facebook.com/xxxjustentacion/"
+            >
+              Justine Ivan Gueco
+            </a>
+          </span>
+        </p>
+      </footer>
     </div>
   );
 }
