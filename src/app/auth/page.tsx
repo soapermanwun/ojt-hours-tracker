@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +14,20 @@ import { createClient } from "@/utils/supabase/client";
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_, session) => {
+        if (session) {
+          location.reload();
+        }
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
