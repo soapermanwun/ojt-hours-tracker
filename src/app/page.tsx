@@ -16,8 +16,20 @@ import { AlertCircle, Calendar, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { toast } from "react-hot-toast";
 import useAuthUser from "@/hooks/useAuthUser";
+import Image from "next/image";
+import { createClient } from "@/utils/supabase/client";
+import { redirect } from "next/dist/server/api-utils";
 
 interface TimeEntry {
   id: number;
@@ -188,13 +200,47 @@ export default function Home() {
     return Math.max(0, (outMinutes - inMinutes) / 60);
   };
 
+  const onClickLogout = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    location.reload();
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <div className="flex justify-between">
         <h1 className="text-3xl font-bold mb-6 text-center">
           OJT Hours Tracker
         </h1>
-        <ThemeSwitcher />
+        <div className="flex gap-3 items-center justify-center">
+          <ThemeSwitcher />
+          {userLoading ? (
+            <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Image
+                  width={100}
+                  height={100}
+                  src={user?.user_metadata.avatar_url}
+                  alt="user pic"
+                  className="h-8 w-8 rounded-full"
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel className="text-center">
+                  <Button onClick={onClickLogout}>Logout</Button>
+                </DropdownMenuLabel>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
