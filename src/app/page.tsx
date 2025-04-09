@@ -16,7 +16,8 @@ import { AlertCircle, Calendar, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { createClient } from "@/utils/supabase/client";
+import { toast } from "react-hot-toast";
+import useAuthUser from "@/hooks/useAuthUser";
 
 interface TimeEntry {
   id: number;
@@ -36,9 +37,9 @@ export default function Home() {
   const [completedHours, setCompletedHours] = useState<number>(0);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const supabase = createClient();
-
+  const { user, userLoading } = useAuthUser();
   const [newEntry, setNewEntry] = useState<NewTimeEntry>({
     date: "",
     morning_time_in: "",
@@ -60,9 +61,6 @@ export default function Home() {
     }
 
     async function fetchEntries() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
       const entries = await fetch(`/api/entries?created_by=${user?.id}`);
 
       const data = await entries.json();
@@ -74,7 +72,7 @@ export default function Home() {
     fetchEntries();
 
     setRequiredHours(Number(localStorage.getItem("hours")));
-  }, []);
+  }, [userLoading]);
 
   useEffect(() => {
     let totalHours = 0;
@@ -132,11 +130,7 @@ export default function Home() {
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    setTimeEntries((prev) => [...prev, { ...newEntry, id: Date.now() }]);
+    setIsSubmitting(true);
 
     const response = await fetch("/api/entries", {
       method: "POST",
@@ -145,8 +139,17 @@ export default function Home() {
 
     if (response.status != 201) {
       // TODO: Add some sort of error sanitization here
+      toast.error("Error adding time entry");
       return;
     }
+
+    const data: TimeEntry = await response.json();
+
+    setTimeEntries((prev) => [...prev, { ...newEntry, id: data.id }]);
+
+    toast.success("Added entry successfully");
+
+    setIsSubmitting(false);
 
     setNewEntry({
       date: "",
@@ -160,17 +163,16 @@ export default function Home() {
   };
 
   const handleDeleteEntry = async (id: number) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
     const response = await fetch(`/api/entries/${id}?created_by=${user?.id}`, {
       method: "DELETE",
     });
 
     if (response.status != 204) {
-      // TODO: Add some sort of error sanitization here
+      toast.error("Cannot delete entry");
       return;
     }
+
+    toast.success("Deleted entry successfully");
     setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
   };
 
@@ -348,8 +350,16 @@ export default function Home() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full text-foreground" onClick={handleAddEntry}>
-              Add Time Entry
+            <Button
+              disabled={isSubmitting}
+              className="w-full text-foreground"
+              onClick={handleAddEntry}
+            >
+              {isSubmitting ? (
+                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+              ) : (
+                <p>Add Time Entry</p>
+              )}
             </Button>
           </CardFooter>
         </Card>
@@ -360,10 +370,10 @@ export default function Home() {
           <CardTitle>Time Entry History</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && (
+          {loading && userLoading && (
             <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
           )}
-          {timeEntries.length === 0 && !loading ? (
+          {timeEntries.length === 0 && !userLoading ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
