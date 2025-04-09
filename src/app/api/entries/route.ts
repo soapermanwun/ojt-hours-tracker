@@ -1,8 +1,6 @@
 import { NextRequest } from "next/server";
 import {
   createEntries,
-  deleteEntry,
-  getEntriesByID,
   getEntriesByUser,
 } from "../../modules/entries/repository";
 import { Entries } from "../../../../generated/prisma";
@@ -28,6 +26,7 @@ export async function GET(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.log(error);
     return new Response(JSON.stringify({ error: "Unknown error occurred" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -38,7 +37,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body = await request.json();
 
-  let {
+  const {
     date,
     morning_time_in,
     morning_time_out,
@@ -68,6 +67,7 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.log(error);
     if (error instanceof ZodError) {
       return new Response(JSON.stringify({ errors: error.flatten() }), {
         status: 400,

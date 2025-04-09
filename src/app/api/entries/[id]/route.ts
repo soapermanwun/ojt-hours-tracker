@@ -48,6 +48,7 @@ export async function DELETE(
       status: 204,
     });
   } catch (error) {
+    console.log(error);
     return new Response(JSON.stringify({ error: "Unknown error occurred" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
