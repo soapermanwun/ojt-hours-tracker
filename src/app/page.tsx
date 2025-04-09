@@ -19,9 +19,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -29,7 +27,6 @@ import { toast } from "react-hot-toast";
 import useAuthUser from "@/hooks/useAuthUser";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
-import { redirect } from "next/dist/server/api-utils";
 
 interface TimeEntry {
   id: number;
