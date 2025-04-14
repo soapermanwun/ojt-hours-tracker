@@ -70,7 +70,11 @@ export default function Home() {
     }
 
     async function fetchEntries() {
-      const entries = await fetch(`/api/entries?created_by=${user?.id}`);
+      if (!user?.id) {
+        return;
+      }
+
+      const entries = await fetch(`/api/entries?created_by=${user.id}`);
 
       const data = await entries.json();
 
@@ -413,10 +417,10 @@ export default function Home() {
           <CardTitle>Time Entry History</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && userLoading && (
+          {loading && (
             <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
           )}
-          {timeEntries.length === 0 && !userLoading ? (
+          {timeEntries.length === 0 && !loading ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
