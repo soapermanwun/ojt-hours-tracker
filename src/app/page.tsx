@@ -279,6 +279,9 @@ export default function Home() {
           </CardContent>
           <CardFooter>
             <div className="w-full">
+              <p className="text-sm">
+                Remaining Hours: {requiredHours - completedHours}
+              </p>
               <Label htmlFor="requiredHours">Total Required Hours:</Label>
               <Input
                 id="requiredHours"
