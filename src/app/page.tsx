@@ -47,6 +47,7 @@ export default function Home() {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const { user, userLoading } = useAuthUser();
   const [newEntry, setNewEntry] = useState<NewTimeEntry>({
@@ -176,17 +177,30 @@ export default function Home() {
   };
 
   const handleDeleteEntry = async (id: number) => {
-    const response = await fetch(`/api/entries/${id}?created_by=${user?.id}`, {
-      method: "DELETE",
-    });
+    try {
+      setIsDeleting(true);
 
-    if (response.status != 204) {
-      toast.error("Cannot delete entry");
-      return;
+      const response = await fetch(
+        `/api/entries/${id}?created_by=${user?.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.status != 204) {
+        toast.error("Cannot delete entry");
+        return;
+      }
+
+      if (response.ok) {
+        toast.success("Deleted entry successfully");
+        setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
+      }
+    } catch (error) {
+      alert(error);
+    } finally {
+      setIsDeleting(false);
     }
-
-    toast.success("Deleted entry successfully");
-    setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
   };
 
   const calculateEntryHours = (timeIn: string, timeOut: string): number => {
@@ -497,11 +511,16 @@ export default function Home() {
 
                     <div className="mt-2 flex justify-end">
                       <Button
+                        disabled={isDeleting}
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDeleteEntry(entry.id)}
                       >
-                        Delete
+                        {isDeleting ? (
+                          <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                        ) : (
+                          <p>Delete</p>
+                        )}
                       </Button>
                     </div>
 
