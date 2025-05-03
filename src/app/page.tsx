@@ -22,6 +22,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 import { toast } from "react-hot-toast";
 import useAuthUser from "@/hooks/useAuthUser";
@@ -51,6 +61,16 @@ export default function Home() {
 
   const { user, userLoading } = useAuthUser();
   const [newEntry, setNewEntry] = useState<NewTimeEntry>({
+    date: "",
+    morning_time_in: "",
+    morning_time_out: "",
+    afternoon_time_in: "",
+    afternoon_time_out: "",
+    evening_time_in: "",
+    evening_time_out: "",
+  });
+
+  const [updateEntry, setUpdateEntry] = useState<NewTimeEntry>({
     date: "",
     morning_time_in: "",
     morning_time_out: "",
@@ -130,6 +150,13 @@ export default function Home() {
     setNewEntry((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleUpdateInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    const { name, value } = e.target;
+    setUpdateEntry((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleRequiredHoursChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ): void => {
@@ -174,6 +201,50 @@ export default function Home() {
       evening_time_in: "",
       evening_time_out: "",
     });
+  };
+
+  const handleUpdateEntry = async (id: number) => {
+    if (!updateEntry.date) {
+      alert("Please select a date");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `/api/entries/${id}?created_by=${user?.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(updateEntry),
+        }
+      );
+
+      if (response.status != 204) {
+        // TODO: Add some sort of error sanitization here
+        toast.error("Error adding time entry");
+        return;
+      }
+
+      if (response.ok) {
+        setTimeEntries((prevTimeEntries) =>
+          prevTimeEntries.map((item) =>
+            item.id === id ? { ...item, ...updateEntry } : item
+          )
+        );
+
+        toast.success("Entry updated successfully");
+      }
+    } catch (error) {
+      alert(error);
+    } finally {
+      setUpdateEntry({
+        date: "",
+        morning_time_in: "",
+        morning_time_out: "",
+        afternoon_time_in: "",
+        afternoon_time_out: "",
+        evening_time_in: "",
+        evening_time_out: "",
+      });
+    }
   };
 
   const handleDeleteEntry = async (id: number) => {
@@ -509,7 +580,162 @@ export default function Home() {
                       )}
                     </div>
 
-                    <div className="mt-2 flex justify-end">
+                    <div className="mt-2 flex justify-end gap-3 items-center">
+                      <Sheet key={index}>
+                        <SheetTrigger asChild>
+                          <Button
+                            onClick={() =>
+                              setUpdateEntry({
+                                date: entry.date,
+                                afternoon_time_in: entry.afternoon_time_in,
+                                afternoon_time_out: entry.afternoon_time_out,
+                                evening_time_in: entry.evening_time_in,
+                                evening_time_out: entry.evening_time_out,
+                                morning_time_in: entry.morning_time_in,
+                                morning_time_out: entry.morning_time_out,
+                              })
+                            }
+                            variant="secondary"
+                          >
+                            Edit
+                          </Button>
+                        </SheetTrigger>
+                        <SheetContent>
+                          <SheetHeader>
+                            <SheetTitle>Edit Time History</SheetTitle>
+                            <SheetDescription>
+                              Edit your time history here and click Submit to
+                              save changes.
+                            </SheetDescription>
+                            <div className="space-y-4">
+                              <div>
+                                <Label
+                                  htmlFor="date"
+                                  className="flex items-center gap-2"
+                                >
+                                  <Calendar className="h-4 w-4" /> Date
+                                </Label>
+                                <Input
+                                  id="date"
+                                  type="date"
+                                  name="date"
+                                  value={updateEntry.date}
+                                  onChange={handleUpdateInputChange}
+                                  className="mt-1"
+                                />
+                              </div>
+
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4" /> Morning
+                                </Label>
+                                <div className="flex gap-2 mt-1">
+                                  <div className="w-1/2">
+                                    <Input
+                                      type="time"
+                                      name="morning_time_in"
+                                      placeholder="Time In"
+                                      value={updateEntry.morning_time_in}
+                                      onChange={handleUpdateInputChange}
+                                    />
+                                    <span className="text-xs text-gray-500">
+                                      Time In
+                                    </span>
+                                  </div>
+                                  <div className="w-1/2">
+                                    <Input
+                                      type="time"
+                                      name="morning_time_out"
+                                      placeholder="Time Out"
+                                      value={updateEntry.morning_time_out}
+                                      onChange={handleUpdateInputChange}
+                                    />
+                                    <span className="text-xs text-gray-500">
+                                      Time Out
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4" /> Afternoon
+                                </Label>
+                                <div className="flex gap-2 mt-1">
+                                  <div className="w-1/2">
+                                    <Input
+                                      type="time"
+                                      name="afternoon_time_in"
+                                      placeholder="Time In"
+                                      value={updateEntry.afternoon_time_in}
+                                      onChange={handleUpdateInputChange}
+                                    />
+                                    <span className="text-xs text-gray-500">
+                                      Time In
+                                    </span>
+                                  </div>
+                                  <div className="w-1/2">
+                                    <Input
+                                      type="time"
+                                      name="afternoon_time_out"
+                                      placeholder="Time Out"
+                                      value={updateEntry.afternoon_time_out}
+                                      onChange={handleUpdateInputChange}
+                                    />
+                                    <span className="text-xs text-gray-500">
+                                      Time Out
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4" /> Evening
+                                  (Optional)
+                                </Label>
+                                <div className="flex gap-2 mt-1">
+                                  <div className="w-1/2">
+                                    <Input
+                                      type="time"
+                                      name="evening_time_in"
+                                      placeholder="Time In"
+                                      value={updateEntry.evening_time_in}
+                                      onChange={handleUpdateInputChange}
+                                    />
+                                    <span className="text-xs text-gray-500">
+                                      Time In
+                                    </span>
+                                  </div>
+                                  <div className="w-1/2">
+                                    <Input
+                                      type="time"
+                                      name="evening_time_out"
+                                      placeholder="Time Out"
+                                      value={updateEntry.evening_time_out}
+                                      onChange={handleUpdateInputChange}
+                                    />
+                                    <span className="text-xs text-gray-500">
+                                      Time Out
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </SheetHeader>
+                          <SheetFooter>
+                            <SheetClose asChild>
+                              <Button
+                                onClick={() => handleUpdateEntry(entry.id)}
+                                variant="outline"
+                                type="submit"
+                              >
+                                Submit
+                              </Button>
+                            </SheetClose>
+                          </SheetFooter>
+                        </SheetContent>
+                      </Sheet>
                       <Button
                         disabled={isDeleting}
                         variant="destructive"

@@ -27,6 +27,20 @@ export async function createEntries(
   return await prisma.entries.create({ data });
 }
 
+export async function updateEntry(
+  id: number,
+  uuid: string,
+  data: Omit<Entries, "id" | "created_at">
+) {
+  return await prisma.entries.update({
+    data,
+    where: {
+      id,
+      created_by: uuid,
+    },
+  });
+}
+
 export async function deleteEntry(id: number, uuid: string): Promise<Entries> {
   return await prisma.entries.delete({
     where: {
