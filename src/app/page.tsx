@@ -765,10 +765,10 @@ export default function Home() {
           Built with NextJS + TailwindCSS by{" "}
           <span>
             <a
-              className="underline hover:text-red-600"
-              href="https://www.facebook.com/xxxjustentacion/"
+              className="underline hover:text-primary"
+              href="https://aybangueco.vercel.app/"
             >
-              Justine Ivan Gueco
+              aybangueco
             </a>
           </span>
         </p>
