@@ -7,9 +7,23 @@ import { Entries } from "../../../../generated/prisma";
 import { entriesSchema } from "@/app/modules/entries";
 import { ZodError } from "zod";
 
+import { createClient } from "@/utils/supabase/server";
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const created_by = searchParams.get("created_by");
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Unauthorized access" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   if (!created_by) {
     return new Response(JSON.stringify([]), {
@@ -47,6 +61,19 @@ export async function POST(request: NextRequest) {
     evening_time_out,
     created_by,
   } = body as Entries;
+
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Unauthorized access" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const input = entriesSchema.parse({

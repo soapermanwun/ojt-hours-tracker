@@ -7,6 +7,7 @@ import {
 import { NextRequest } from "next/server";
 import { Entries } from "../../../../../generated/prisma";
 import { ZodError } from "zod";
+import { createClient } from "@/utils/supabase/server";
 
 export async function PUT(
   request: NextRequest,
@@ -27,6 +28,19 @@ export async function PUT(
   const { id } = await params;
   const searchParams = request.nextUrl.searchParams;
   const created_by = searchParams.get("created_by");
+
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Unauthorized access" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   if (!created_by) {
     return new Response(
@@ -100,6 +114,19 @@ export async function DELETE(
   const { id } = await params;
   const searchParams = request.nextUrl.searchParams;
   const created_by = searchParams.get("created_by");
+
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Unauthorized access" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   if (!created_by) {
     return new Response(
