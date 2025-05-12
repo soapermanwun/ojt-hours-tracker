@@ -209,6 +209,7 @@ export default function Home() {
         evening_time_out: "",
       });
     } catch (error) {
+      console.error(error);
       toast.error("Error cannot add entry");
     } finally {
       setIsSubmitting(false);
@@ -236,6 +237,7 @@ export default function Home() {
 
       toast.success("Entry updated successfully");
     } catch (error) {
+      console.error(error);
       toast.error("Error cannot update entry");
     } finally {
       setUpdateEntry({
@@ -263,6 +265,7 @@ export default function Home() {
       toast.success("Deleted entry successfully");
       setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
     } catch (error) {
+      console.error(error);
       toast.error("Error cannot delete entry");
     } finally {
       setIsDeleting(false);

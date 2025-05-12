@@ -3,7 +3,6 @@
 import {
   createEntries,
   deleteEntry,
-  entriesSchema,
   getEntriesByID,
   getEntriesByUser,
   updateEntry,
