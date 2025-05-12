@@ -95,7 +95,7 @@ export default function Home() {
         return;
       }
 
-      const entries = await fetch(`/api/entries?created_by=${user.id}`);
+      const entries = await fetch(`/api/entries`);
 
       const data = await entries.json();
 
@@ -175,7 +175,7 @@ export default function Home() {
 
     const response = await fetch("/api/entries", {
       method: "POST",
-      body: JSON.stringify({ created_by: user?.id, ...newEntry }),
+      body: JSON.stringify({ ...newEntry }),
     });
 
     if (response.status != 201) {
@@ -209,13 +209,10 @@ export default function Home() {
       return;
     }
     try {
-      const response = await fetch(
-        `/api/entries/${id}?created_by=${user?.id}`,
-        {
-          method: "PUT",
-          body: JSON.stringify(updateEntry),
-        }
-      );
+      const response = await fetch(`/api/entries/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(updateEntry),
+      });
 
       if (response.status != 204) {
         // TODO: Add some sort of error sanitization here
@@ -251,12 +248,9 @@ export default function Home() {
     try {
       setIsDeleting(true);
 
-      const response = await fetch(
-        `/api/entries/${id}?created_by=${user?.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`/api/entries/${id}`, {
+        method: "DELETE",
+      });
 
       if (response.status != 204) {
         toast.error("Cannot delete entry");

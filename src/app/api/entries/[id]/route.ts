@@ -26,8 +26,6 @@ export async function PUT(
   } = body as Entries;
 
   const { id } = await params;
-  const searchParams = request.nextUrl.searchParams;
-  const created_by = searchParams.get("created_by");
 
   const supabase = await createClient();
 
@@ -42,21 +40,11 @@ export async function PUT(
     });
   }
 
-  if (!created_by) {
-    return new Response(
-      JSON.stringify({ error: "The requested resource could not be found" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
-
   if (!id) {
     return new Response(
       JSON.stringify({ error: "The requested resource could not be found" }),
       {
-        status: 400,
+        status: 404,
         headers: { "Content-Type": "application/json" },
       }
     );
@@ -71,10 +59,10 @@ export async function PUT(
       afternoon_time_out,
       evening_time_in: evening_time_in ?? null,
       evening_time_out: evening_time_out ?? null,
-      created_by,
+      created_by: session.user.id,
     });
 
-    const existingEntry = await getEntriesByID(Number(id), created_by);
+    const existingEntry = await getEntriesByID(Number(id), session.user.id);
 
     if (!existingEntry) {
       return new Response(
@@ -86,7 +74,7 @@ export async function PUT(
       );
     }
 
-    await updateEntry(Number(id), created_by, input);
+    await updateEntry(Number(id), session.user.id, input);
 
     return new Response(null, {
       status: 204,
@@ -112,8 +100,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: number }> }
 ) {
   const { id } = await params;
-  const searchParams = request.nextUrl.searchParams;
-  const created_by = searchParams.get("created_by");
 
   const supabase = await createClient();
 
@@ -128,28 +114,18 @@ export async function DELETE(
     });
   }
 
-  if (!created_by) {
-    return new Response(
-      JSON.stringify({ error: "The requested resource could not be found" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
-
   if (!id) {
     return new Response(
       JSON.stringify({ error: "The requested resource could not be found" }),
       {
-        status: 400,
+        status: 404,
         headers: { "Content-Type": "application/json" },
       }
     );
   }
 
   try {
-    const existingEntry = await getEntriesByID(Number(id), created_by);
+    const existingEntry = await getEntriesByID(Number(id), session.user.id);
 
     if (!existingEntry) {
       return new Response(
@@ -161,7 +137,7 @@ export async function DELETE(
       );
     }
 
-    await deleteEntry(Number(id), created_by);
+    await deleteEntry(Number(id), session.user.id);
 
     return new Response(null, {
       status: 204,
