@@ -1,16 +1,11 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/**.js": {
-      "includeFiles": [
-        "generated/prisma/**",
-        "node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node"
-      ]
+      "includeFiles": "generated/prisma/**,node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node"
     },
     ".next/server/app/**.js": {
-      "includeFiles": [
-        "generated/prisma/**",
-        "node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node"
-      ]
+      "includeFiles": "generated/prisma/**,node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node"
     }
   }
 }
