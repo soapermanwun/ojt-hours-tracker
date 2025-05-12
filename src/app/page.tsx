@@ -37,6 +37,12 @@ import { toast } from "react-hot-toast";
 import useAuthUser from "@/hooks/useAuthUser";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
+import {
+  actionCreateEntry,
+  actionDeleteEntry,
+  actionGetEntriesByUser,
+  actionUpdateEntry,
+} from "./modules/entries";
 
 interface TimeEntry {
   id: number;
@@ -91,16 +97,25 @@ export default function Home() {
     }
 
     async function fetchEntries() {
-      if (!user?.id) {
-        return;
+      try {
+        if (!user?.id) {
+          return;
+        }
+
+        const entries = await actionGetEntriesByUser(user.id);
+
+        setLoading(false);
+        setTimeEntries(
+          entries.map((entry) => ({
+            ...entry,
+            evening_time_in: entry.evening_time_in || "",
+            evening_time_out: entry.evening_time_out || "",
+          }))
+        );
+      } catch (error) {
+        console.log(error);
+        toast.error("Error fetching entries");
       }
-
-      const entries = await fetch(`/api/entries?created_by=${user.id}`);
-
-      const data = await entries.json();
-
-      setLoading(false);
-      setTimeEntries(data);
     }
 
     fetchEntries();
@@ -171,36 +186,33 @@ export default function Home() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    const response = await fetch("/api/entries", {
-      method: "POST",
-      body: JSON.stringify({ created_by: user?.id, ...newEntry }),
-    });
-
-    if (response.status != 201) {
-      // TODO: Add some sort of error sanitization here
-      toast.error("Error adding time entry");
+    if (!user?.id) {
       return;
     }
 
-    const data: TimeEntry = await response.json();
+    try {
+      setIsSubmitting(true);
 
-    setTimeEntries((prev) => [...prev, { ...newEntry, id: data.id }]);
+      const entry = await actionCreateEntry(user.id, { ...newEntry });
 
-    toast.success("Added entry successfully");
+      setTimeEntries((prev) => [...prev, { ...newEntry, id: entry.id }]);
 
-    setIsSubmitting(false);
+      toast.success("Added entry successfully");
 
-    setNewEntry({
-      date: "",
-      morning_time_in: "",
-      morning_time_out: "",
-      afternoon_time_in: "",
-      afternoon_time_out: "",
-      evening_time_in: "",
-      evening_time_out: "",
-    });
+      setNewEntry({
+        date: "",
+        morning_time_in: "",
+        morning_time_out: "",
+        afternoon_time_in: "",
+        afternoon_time_out: "",
+        evening_time_in: "",
+        evening_time_out: "",
+      });
+    } catch (error) {
+      toast.error("Error cannot add entry");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleUpdateEntry = async (id: number) => {
@@ -208,32 +220,23 @@ export default function Home() {
       alert("Please select a date");
       return;
     }
+
+    if (!user?.id) {
+      return;
+    }
+
     try {
-      const response = await fetch(
-        `/api/entries/${id}?created_by=${user?.id}`,
-        {
-          method: "PUT",
-          body: JSON.stringify(updateEntry),
-        }
+      await actionUpdateEntry(id, user.id, { ...updateEntry });
+
+      setTimeEntries((prevTimeEntries) =>
+        prevTimeEntries.map((item) =>
+          item.id === id ? { ...item, ...updateEntry } : item
+        )
       );
 
-      if (response.status != 204) {
-        // TODO: Add some sort of error sanitization here
-        toast.error("Error adding time entry");
-        return;
-      }
-
-      if (response.ok) {
-        setTimeEntries((prevTimeEntries) =>
-          prevTimeEntries.map((item) =>
-            item.id === id ? { ...item, ...updateEntry } : item
-          )
-        );
-
-        toast.success("Entry updated successfully");
-      }
+      toast.success("Entry updated successfully");
     } catch (error) {
-      alert(error);
+      toast.error("Error cannot update entry");
     } finally {
       setUpdateEntry({
         date: "",
@@ -248,27 +251,19 @@ export default function Home() {
   };
 
   const handleDeleteEntry = async (id: number) => {
+    if (!user?.id) {
+      return;
+    }
+
     try {
       setIsDeleting(true);
 
-      const response = await fetch(
-        `/api/entries/${id}?created_by=${user?.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      await actionDeleteEntry(id, user.id);
 
-      if (response.status != 204) {
-        toast.error("Cannot delete entry");
-        return;
-      }
-
-      if (response.ok) {
-        toast.success("Deleted entry successfully");
-        setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
-      }
+      toast.success("Deleted entry successfully");
+      setTimeEntries((prev) => prev.filter((entry) => entry.id !== id));
     } catch (error) {
-      alert(error);
+      toast.error("Error cannot delete entry");
     } finally {
       setIsDeleting(false);
     }

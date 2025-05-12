@@ -30,7 +30,7 @@ export async function createEntries(
 export async function updateEntry(
   id: number,
   uuid: string,
-  data: Omit<Entries, "id" | "created_at">
+  data: Omit<Entries, "id" | "created_at" | "created_by">
 ) {
   return await prisma.entries.update({
     data,
