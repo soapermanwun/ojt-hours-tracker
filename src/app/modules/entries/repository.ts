@@ -1,5 +1,5 @@
-import { Entries } from "@/generated/prisma";
 import { prisma } from "@/utils/prisma";
+import { Entries } from "../../../../generated/prisma";
 
 export async function getEntriesByUser(uuid: string): Promise<Entries[]> {
   return await prisma.entries.findMany({
@@ -30,7 +30,7 @@ export async function createEntries(
 export async function updateEntry(
   id: number,
   uuid: string,
-  data: Omit<Entries, "id" | "created_at" | "created_by">
+  data: Omit<Entries, "id" | "created_at">
 ) {
   return await prisma.entries.update({
     data,
