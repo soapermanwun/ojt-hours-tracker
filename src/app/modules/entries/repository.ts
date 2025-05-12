@@ -1,5 +1,5 @@
+import { Entries } from "@/generated/prisma";
 import { prisma } from "@/utils/prisma";
-import { Entries } from "../../../../generated/prisma";
 
 export async function getEntriesByUser(uuid: string): Promise<Entries[]> {
   return await prisma.entries.findMany({

@@ -1,5 +1,6 @@
 "use server";
 
+import { Entries } from "@/generated/prisma";
 import {
   createEntries,
   deleteEntry,
@@ -7,7 +8,6 @@ import {
   getEntriesByUser,
   updateEntry,
 } from ".";
-import { Entries } from "../../../../generated/prisma";
 
 export async function actionGetEntriesByUser(uuid: string): Promise<Entries[]> {
   return await getEntriesByUser(uuid);
