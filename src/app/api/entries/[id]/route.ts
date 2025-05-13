@@ -7,6 +7,7 @@ import {
 import { NextRequest } from "next/server";
 import { Entries } from "../../../../../generated/prisma";
 import { ZodError } from "zod";
+import { createClient } from "@/utils/supabase/server";
 
 export async function PUT(
   request: NextRequest,
@@ -25,24 +26,25 @@ export async function PUT(
   } = body as Entries;
 
   const { id } = await params;
-  const searchParams = request.nextUrl.searchParams;
-  const created_by = searchParams.get("created_by");
 
-  if (!created_by) {
-    return new Response(
-      JSON.stringify({ error: "The requested resource could not be found" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Unauthorized access" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   if (!id) {
     return new Response(
       JSON.stringify({ error: "The requested resource could not be found" }),
       {
-        status: 400,
+        status: 404,
         headers: { "Content-Type": "application/json" },
       }
     );
@@ -57,10 +59,10 @@ export async function PUT(
       afternoon_time_out,
       evening_time_in: evening_time_in ?? null,
       evening_time_out: evening_time_out ?? null,
-      created_by,
+      created_by: session.user.id,
     });
 
-    const existingEntry = await getEntriesByID(Number(id), created_by);
+    const existingEntry = await getEntriesByID(Number(id), session.user.id);
 
     if (!existingEntry) {
       return new Response(
@@ -72,7 +74,7 @@ export async function PUT(
       );
     }
 
-    await updateEntry(Number(id), created_by, input);
+    await updateEntry(Number(id), session.user.id, input);
 
     return new Response(null, {
       status: 204,
@@ -98,31 +100,32 @@ export async function DELETE(
   { params }: { params: Promise<{ id: number }> }
 ) {
   const { id } = await params;
-  const searchParams = request.nextUrl.searchParams;
-  const created_by = searchParams.get("created_by");
 
-  if (!created_by) {
-    return new Response(
-      JSON.stringify({ error: "The requested resource could not be found" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Unauthorized access" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   if (!id) {
     return new Response(
       JSON.stringify({ error: "The requested resource could not be found" }),
       {
-        status: 400,
+        status: 404,
         headers: { "Content-Type": "application/json" },
       }
     );
   }
 
   try {
-    const existingEntry = await getEntriesByID(Number(id), created_by);
+    const existingEntry = await getEntriesByID(Number(id), session.user.id);
 
     if (!existingEntry) {
       return new Response(
@@ -134,7 +137,7 @@ export async function DELETE(
       );
     }
 
-    await deleteEntry(Number(id), created_by);
+    await deleteEntry(Number(id), session.user.id);
 
     return new Response(null, {
       status: 204,

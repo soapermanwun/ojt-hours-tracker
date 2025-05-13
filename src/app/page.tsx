@@ -76,7 +76,7 @@ export default function Home() {
         return;
       }
 
-      const entries = await fetch(`/api/entries?created_by=${user.id}`);
+      const entries = await fetch(`/api/entries`);
 
       const data = await entries.json();
 
@@ -137,7 +137,7 @@ export default function Home() {
 
     const response = await fetch("/api/entries", {
       method: "POST",
-      body: JSON.stringify({ created_by: user?.id, ...newEntry }),
+      body: JSON.stringify({ ...newEntry }),
     });
 
     if (response.status != 201) {
