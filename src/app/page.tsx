@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Calendar, Clock } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -29,6 +29,8 @@ import { createClient } from "@/utils/supabase/client";
 import { calculateEntryHours } from "./modules/entries/helpers";
 import { EntryContext } from "./modules/entries/components/EntryContext";
 import EntriesCard from "./modules/entries/components/EntriesCard";
+import useEntryForm from "@/hooks/useEntryForm";
+import EntryForm from "./modules/entries/components/EntryForm";
 
 interface TimeEntry {
   id: number;
@@ -44,22 +46,20 @@ interface TimeEntry {
 type NewTimeEntry = Omit<TimeEntry, "id">;
 
 export default function Home() {
+  const {
+    entryValue,
+    setEntryValue,
+    handleInputChange,
+    isSubmitting,
+    setIsSubmitting,
+  } = useEntryForm();
+
   const entryContext = useContext(EntryContext);
   const [requiredHours, setRequiredHours] = useState<number>(500);
   const [completedHours, setCompletedHours] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { user, userLoading } = useAuthUser();
-  const [newEntry, setNewEntry] = useState<NewTimeEntry>({
-    date: "",
-    morning_time_in: "",
-    morning_time_out: "",
-    afternoon_time_in: "",
-    afternoon_time_out: "",
-    evening_time_in: "",
-    evening_time_out: "",
-  });
 
   const completionPercentage: number = Math.min(
     Math.round((completedHours / requiredHours) * 100),
@@ -80,6 +80,8 @@ export default function Home() {
 
       const data = await entries.json();
 
+      console.log(entries);
+
       setLoading(false);
       entryContext!.setTimeEntries(data);
     }
@@ -92,18 +94,18 @@ export default function Home() {
   useEffect(() => {
     let totalHours = 0;
 
-    entryContext!.timeEntries.forEach((entry) => {
+    entryContext!.timeEntries.forEach((entryValue) => {
       const morningHours = calculateEntryHours(
-        entry.morning_time_in,
-        entry.morning_time_out
+        entryValue.morning_time_in,
+        entryValue.morning_time_out
       );
       const afternoonHours = calculateEntryHours(
-        entry.afternoon_time_in,
-        entry.afternoon_time_out
+        entryValue.afternoon_time_in,
+        entryValue.afternoon_time_out
       );
       const eveningHours = calculateEntryHours(
-        entry.evening_time_in,
-        entry.evening_time_out
+        entryValue.evening_time_in,
+        entryValue.evening_time_out
       );
 
       totalHours += morningHours + afternoonHours + eveningHours;
@@ -114,11 +116,6 @@ export default function Home() {
     setCompletedHours(parseFloat(totalHours.toFixed(2)));
   }, [entryContext!.timeEntries]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const { name, value } = e.target;
-    setNewEntry((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleRequiredHoursChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ): void => {
@@ -128,7 +125,7 @@ export default function Home() {
   };
 
   const handleAddEntry = async () => {
-    if (!newEntry.date) {
+    if (!entryValue.date) {
       alert("Please select a date");
       return;
     }
@@ -137,12 +134,12 @@ export default function Home() {
 
     const response = await fetch("/api/entries", {
       method: "POST",
-      body: JSON.stringify({ ...newEntry }),
+      body: JSON.stringify({ ...entryValue }),
     });
 
     if (response.status != 201) {
       // TODO: Add some sort of error sanitization here
-      toast.error("Error adding time entry");
+      toast.error("Error adding time entryValue");
       return;
     }
 
@@ -150,14 +147,14 @@ export default function Home() {
 
     entryContext!.setTimeEntries((prev) => [
       ...prev,
-      { ...newEntry, id: data.id },
+      { ...entryValue, id: data.id },
     ]);
 
-    toast.success("Added entry successfully");
+    toast.success("Added entryValue successfully");
 
     setIsSubmitting(false);
 
-    setNewEntry({
+    setEntryValue({
       date: "",
       morning_time_in: "",
       morning_time_out: "",
@@ -261,124 +258,19 @@ export default function Home() {
           </CardFooter>
         </Card>
 
-        <Card className="shadow-md">
+        <Card>
           <CardHeader>
             <CardTitle>Record Time Entry</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="date" className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" /> Date
-                </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  name="date"
-                  value={newEntry.date}
-                  onChange={handleInputChange}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" /> Morning
-                </Label>
-                <div className="flex gap-2 mt-1">
-                  <div className="w-1/2">
-                    <Input
-                      type="time"
-                      name="morning_time_in"
-                      placeholder="Time In"
-                      value={newEntry.morning_time_in}
-                      onChange={handleInputChange}
-                    />
-                    <span className="text-xs text-gray-500">Time In</span>
-                  </div>
-                  <div className="w-1/2">
-                    <Input
-                      type="time"
-                      name="morning_time_out"
-                      placeholder="Time Out"
-                      value={newEntry.morning_time_out}
-                      onChange={handleInputChange}
-                    />
-                    <span className="text-xs text-gray-500">Time Out</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" /> Afternoon
-                </Label>
-                <div className="flex gap-2 mt-1">
-                  <div className="w-1/2">
-                    <Input
-                      type="time"
-                      name="afternoon_time_in"
-                      placeholder="Time In"
-                      value={newEntry.afternoon_time_in}
-                      onChange={handleInputChange}
-                    />
-                    <span className="text-xs text-gray-500">Time In</span>
-                  </div>
-                  <div className="w-1/2">
-                    <Input
-                      type="time"
-                      name="afternoon_time_out"
-                      placeholder="Time Out"
-                      value={newEntry.afternoon_time_out}
-                      onChange={handleInputChange}
-                    />
-                    <span className="text-xs text-gray-500">Time Out</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" /> Evening (Optional)
-                </Label>
-                <div className="flex gap-2 mt-1">
-                  <div className="w-1/2">
-                    <Input
-                      type="time"
-                      name="evening_time_in"
-                      placeholder="Time In"
-                      value={newEntry.evening_time_in}
-                      onChange={handleInputChange}
-                    />
-                    <span className="text-xs text-gray-500">Time In</span>
-                  </div>
-                  <div className="w-1/2">
-                    <Input
-                      type="time"
-                      name="evening_time_out"
-                      placeholder="Time Out"
-                      value={newEntry.evening_time_out}
-                      onChange={handleInputChange}
-                    />
-                    <span className="text-xs text-gray-500">Time Out</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <EntryForm
+              data={entryValue}
+              handleInputChange={handleInputChange}
+              isSubmitting={isSubmitting}
+              isUpdate={false}
+              handleAddEntry={handleAddEntry}
+            />
           </CardContent>
-          <CardFooter>
-            <Button
-              disabled={isSubmitting}
-              className="w-full text-foreground"
-              onClick={handleAddEntry}
-            >
-              {isSubmitting ? (
-                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-              ) : (
-                <p>Add Time Entry</p>
-              )}
-            </Button>
-          </CardFooter>
         </Card>
       </div>
 
@@ -394,31 +286,32 @@ export default function Home() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                No time entries yet. Add your first entry using the form above.
+                No time entries yet. Add your first entryValue using the form
+                above.
               </AlertDescription>
             </Alert>
           ) : (
             <div className="space-y-4">
-              {entryContext!.timeEntries.map((entry, index) => {
+              {entryContext!.timeEntries.map((entryValue, index) => {
                 const morningHours = calculateEntryHours(
-                  entry.morning_time_in,
-                  entry.morning_time_out
+                  entryValue.morning_time_in,
+                  entryValue.morning_time_out
                 );
                 const afternoonHours = calculateEntryHours(
-                  entry.afternoon_time_in,
-                  entry.afternoon_time_out
+                  entryValue.afternoon_time_in,
+                  entryValue.afternoon_time_out
                 );
                 const eveningHours = calculateEntryHours(
-                  entry.evening_time_in,
-                  entry.evening_time_out
+                  entryValue.evening_time_in,
+                  entryValue.evening_time_out
                 );
                 const totalHours = morningHours + afternoonHours + eveningHours;
 
                 return (
                   <EntriesCard
-                    key={entry.id}
+                    key={entryValue.id}
                     index={index}
-                    entry={entry}
+                    entry={entryValue}
                     morningHours={morningHours}
                     afternoonHours={afternoonHours}
                     eveningHours={eveningHours}
