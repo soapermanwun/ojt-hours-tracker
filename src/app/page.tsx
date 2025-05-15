@@ -31,19 +31,7 @@ import { EntryContext } from "./modules/entries/components/EntryContext";
 import EntriesCard from "./modules/entries/components/EntriesCard";
 import useEntryForm from "@/hooks/useEntryForm";
 import EntryForm from "./modules/entries/components/EntryForm";
-
-interface TimeEntry {
-  id: number;
-  date: string;
-  morning_time_in: string;
-  morning_time_out: string;
-  afternoon_time_in: string;
-  afternoon_time_out: string;
-  evening_time_in: string;
-  evening_time_out: string;
-}
-
-type NewTimeEntry = Omit<TimeEntry, "id">;
+import { TimeEntry } from "@/utils/types";
 
 export default function Home() {
   const {
