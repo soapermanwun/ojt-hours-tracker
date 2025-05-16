@@ -20,7 +20,7 @@ import { EntryContext } from "./EntryContext";
 import useAuthUser from "@/hooks/useAuthUser";
 import useEntryForm from "@/hooks/useEntryForm";
 import EntryForm from "./EntryForm";
-import { actionDeleteEntry, actionUpdateEntry } from "../actions";
+import { actionDeleteEntry, actionUpdateEntry } from "../";
 
 export default function EntriesCard({
   index,

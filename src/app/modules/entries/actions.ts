@@ -1,11 +1,6 @@
 "use server";
 
-import {
-  createEntry,
-  deleteEntry,
-  getEntriesByUser,
-  updateEntry,
-} from "./repository";
+import { createEntry, deleteEntry, getEntriesByUser, updateEntry } from ".";
 import { Entries } from "@/generated/client";
 
 export async function actionGetEntries(userID: string): Promise<{

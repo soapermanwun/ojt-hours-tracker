@@ -26,12 +26,15 @@ import { toast } from "react-hot-toast";
 import useAuthUser from "@/hooks/useAuthUser";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
-import { calculateEntryHours } from "./modules/entries/helpers";
-import { EntryContext } from "./modules/entries/components/EntryContext";
-import EntriesCard from "./modules/entries/components/EntriesCard";
 import useEntryForm from "@/hooks/useEntryForm";
-import EntryForm from "./modules/entries/components/EntryForm";
-import { actionCreateEntry, actionGetEntries } from "./modules/entries/actions";
+import {
+  actionCreateEntry,
+  actionGetEntries,
+  calculateEntryHours,
+  EntriesCard,
+  EntryContext,
+  EntryForm,
+} from "@/modules/entries";
 
 export default function Home() {
   const {
