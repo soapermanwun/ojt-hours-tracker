@@ -1,5 +1,5 @@
+import { Entries } from "@/generated/client";
 import { prisma } from "@/utils/prisma";
-import { Entries } from "../../../../generated/prisma";
 
 export async function getEntriesByUser(uuid: string): Promise<Entries[]> {
   return await prisma.entries.findMany({
@@ -21,7 +21,7 @@ export async function getEntriesByID(
   });
 }
 
-export async function createEntries(
+export async function createEntry(
   data: Omit<Entries, "id" | "created_at">
 ): Promise<Entries> {
   return await prisma.entries.create({ data });
@@ -30,7 +30,7 @@ export async function createEntries(
 export async function updateEntry(
   id: number,
   uuid: string,
-  data: Omit<Entries, "id" | "created_at">
+  data: Omit<Entries, "id" | "created_at" | "created_by">
 ) {
   return await prisma.entries.update({
     data,

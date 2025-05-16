@@ -20,6 +20,7 @@ import { EntryContext } from "./EntryContext";
 import useAuthUser from "@/hooks/useAuthUser";
 import useEntryForm from "@/hooks/useEntryForm";
 import EntryForm from "./EntryForm";
+import { actionDeleteEntry, actionUpdateEntry } from "../actions";
 
 export default function EntriesCard({
   index,
@@ -54,63 +55,55 @@ export default function EntriesCard({
       return;
     }
 
+    if (!user?.id) {
+      toast.error("Unexpected error occured");
+      return;
+    }
+
     setIsSubmitting(true);
 
-    try {
-      const response = await fetch(`/api/entries/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(entryValue),
-      });
+    const { ok } = await actionUpdateEntry(id, user.id, entryValue);
 
-      if (response.status != 204) {
-        // TODO: Add some sort of error sanitization here
-        toast.error("Error adding time entry");
-        return;
-      }
+    if (!ok) {
+      toast.error("Error adding time entry");
+      return;
+    }
 
-      if (response.ok) {
-        entryContext!.setTimeEntries((prevTimeEntries) =>
-          prevTimeEntries.map((item) =>
-            item.id === id ? { ...item, ...entryValue } : item
-          )
-        );
+    if (ok) {
+      entryContext!.setTimeEntries((prevTimeEntries) =>
+        prevTimeEntries.map((item) =>
+          item.id === id ? { ...item, ...entryValue } : item
+        )
+      );
 
-        toast.success("Entry updated successfully");
-      }
-    } catch (error) {
-      alert(error);
-    } finally {
+      toast.success("Entry updated successfully");
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteEntry = async (id: number) => {
-    try {
-      setIsDeleting(true);
-
-      const response = await fetch(
-        `/api/entries/${id}?created_by=${user?.id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.status != 204) {
-        toast.error("Cannot delete entry");
-        return;
-      }
-
-      if (response.ok) {
-        toast.success("Deleted entry successfully");
-        entryContext!.setTimeEntries((prev) =>
-          prev.filter((entry) => entry.id !== id)
-        );
-      }
-    } catch (error) {
-      alert(error);
-    } finally {
-      setIsDeleting(false);
+    if (!user?.id) {
+      toast.error("Error deleting entry");
+      return;
     }
+
+    setIsDeleting(true);
+
+    const { ok } = await actionDeleteEntry(id, user.id);
+
+    if (!ok) {
+      toast.error("Cannot delete entry");
+      return;
+    }
+
+    if (ok) {
+      toast.success("Deleted entry successfully");
+      entryContext!.setTimeEntries((prev) =>
+        prev.filter((entry) => entry.id !== id)
+      );
+    }
+
+    setIsDeleting(false);
   };
 
   return (
