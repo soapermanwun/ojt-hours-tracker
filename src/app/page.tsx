@@ -31,7 +31,6 @@ import { EntryContext } from "./modules/entries/components/EntryContext";
 import EntriesCard from "./modules/entries/components/EntriesCard";
 import useEntryForm from "@/hooks/useEntryForm";
 import EntryForm from "./modules/entries/components/EntryForm";
-import { TimeEntry } from "@/utils/types";
 import { actionCreateEntry, actionGetEntries } from "./modules/entries/actions";
 
 export default function Home() {
@@ -79,7 +78,7 @@ export default function Home() {
 
       setLoading(false);
       entryContext!.setTimeEntries(
-        data.map((entry: any) => ({
+        data.map((entry) => ({
           ...entry,
           evening_time_in: entry.evening_time_in ?? "",
           evening_time_out: entry.evening_time_out ?? "",

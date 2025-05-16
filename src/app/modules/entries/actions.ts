@@ -1,6 +1,5 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
 import {
   createEntry,
   deleteEntry,
@@ -50,6 +49,7 @@ export async function actionUpdateEntry(
 
     return { ok: true, data: entry };
   } catch (error) {
+    console.log(error);
     return { ok: false, data: null };
   }
 }
@@ -59,10 +59,11 @@ export async function actionDeleteEntry(
   userID: string
 ): Promise<{ ok: boolean }> {
   try {
-    const entry = await deleteEntry(entryID, userID);
+    await deleteEntry(entryID, userID);
 
     return { ok: true };
   } catch (error) {
+    console.log(error);
     return { ok: false };
   }
 }
