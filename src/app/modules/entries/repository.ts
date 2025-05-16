@@ -6,6 +6,9 @@ export async function getEntriesByUser(uuid: string): Promise<Entries[]> {
     where: {
       created_by: uuid,
     },
+    orderBy: {
+      id: "asc",
+    },
   });
 }
 
