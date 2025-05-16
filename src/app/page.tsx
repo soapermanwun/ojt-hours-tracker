@@ -31,7 +31,7 @@ import { EntryContext } from "./modules/entries/components/EntryContext";
 import EntriesCard from "./modules/entries/components/EntriesCard";
 import useEntryForm from "@/hooks/useEntryForm";
 import EntryForm from "./modules/entries/components/EntryForm";
-import { TimeEntry } from "@/utils/types";
+import { actionCreateEntry, actionGetEntries } from "./modules/entries/actions";
 
 export default function Home() {
   const {
@@ -64,14 +64,26 @@ export default function Home() {
         return;
       }
 
-      const entries = await fetch(`/api/entries`);
+      const { ok, data } = await actionGetEntries(user.id);
 
-      const data = await entries.json();
+      if (!ok) {
+        toast.error("Error fetching entries");
+        return;
+      }
 
-      console.log(entries);
+      if (!data) {
+        toast.error("Error fetching entries");
+        return;
+      }
 
       setLoading(false);
-      entryContext!.setTimeEntries(data);
+      entryContext!.setTimeEntries(
+        data.map((entry) => ({
+          ...entry,
+          evening_time_in: entry.evening_time_in ?? "",
+          evening_time_out: entry.evening_time_out ?? "",
+        }))
+      );
     }
 
     fetchEntries();
@@ -120,25 +132,24 @@ export default function Home() {
 
     setIsSubmitting(true);
 
-    const response = await fetch("/api/entries", {
-      method: "POST",
-      body: JSON.stringify({ ...entryValue }),
-    });
+    const { ok, data } = await actionCreateEntry(user!.id, entryValue);
 
-    if (response.status != 201) {
-      // TODO: Add some sort of error sanitization here
-      toast.error("Error adding time entryValue");
+    if (!ok) {
+      toast.error("Error creating entry");
       return;
     }
 
-    const data: TimeEntry = await response.json();
+    if (!data) {
+      toast.error("Error creating entry");
+      return;
+    }
 
     entryContext!.setTimeEntries((prev) => [
       ...prev,
       { ...entryValue, id: data.id },
     ]);
 
-    toast.success("Added entryValue successfully");
+    toast.success("Added entry successfully");
 
     setIsSubmitting(false);
 
